@@ -98,24 +98,21 @@ int main(int argc, char *argv[]) {
 
     gtk_container_add(GTK_CONTAINER(window), box1);
 
-    button = gtk_button_new_with_label("Button 1");
-    g_signal_connect(button, "clicked", G_CALLBACK(callback), (gpointer)"button 1");
-    gtk_box_pack_start(GTK_BOX(box1), button, TRUE, TRUE, 0);
-    gtk_widget_show(button);
-
-    button = gtk_button_new_with_label("Button 2");
-    g_signal_connect(button, "clicked", G_CALLBACK(callback), (gpointer)"button 2");
-
-    gtk_box_pack_start(GTK_BOX(box1), button, TRUE, TRUE, 0);
-
     //Create tree model
     store = gtk_tree_store_new(N_COLUMNS,
             G_TYPE_STRING,
             G_TYPE_BOOLEAN);
     create_file_tree(".", NULL);
+    //Sort model
+    GtkTreeModel* sorted_model = gtk_tree_model_sort_new_with_model(store);
+    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(sorted_model),
+            FILE_COLUMN, GTK_SORT_ASCENDING);
+
     //Create the tree's view
     GtkWidget *tree;
-    tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (store));
+    //tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(sorted_model));
+
     GtkCellRenderer *renderer;
     GtkTreeViewColumn *column;
 
@@ -147,7 +144,6 @@ int main(int argc, char *argv[]) {
 
     //Show all of the widgets
     gtk_widget_show(tree);
-    gtk_widget_show(button);
     gtk_widget_show(box1);
     gtk_widget_show(window); //Show window last so they all appear at once.
 
