@@ -6,6 +6,8 @@ enum {
     N_COLUMNS
 };
 
+static GtkTreeStore* store;
+
 static void callback(GtkWidget *widget, gpointer data) {
     g_print ("Hello again - %s was pressed\n", (gchar *) data);
 }
@@ -54,6 +56,35 @@ void print_file_tree(const gchar* dir_name) {
     }
 }
 
+void create_file_tree(const gchar* root_dir_name, GtkTreeIter* root_iter) {
+    GDir* dir;
+    GError* error;
+    const gchar* filename;
+    GtkTreeIter child_iter;
+
+    dir = g_dir_open(root_dir_name, 0, &error);
+    while((filename = g_dir_read_name(dir))) {
+        //Find all of the directories first of all:
+        GFileTest test_mask = G_FILE_TEST_IS_DIR;
+        gchar* new_filename = g_strjoin("/", root_dir_name, filename, NULL);
+        if(g_file_test(new_filename, test_mask)) {
+            gtk_tree_store_append(store, &child_iter, root_iter);
+            gtk_tree_store_set(store, &child_iter, 
+                    FILE_COLUMN, new_filename,
+                    -1);
+            create_file_tree(new_filename, &child_iter);
+            g_free(new_filename);
+        } else {
+            //Add to the root normally.
+            gtk_tree_store_append(store, &child_iter, root_iter);
+            gtk_tree_store_set(store, &child_iter, 
+                    FILE_COLUMN, filename,
+                    LOCKED_COLUMN, TRUE,
+                    -1);
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     GtkWidget *window;
     GtkWidget *button;
@@ -84,27 +115,10 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(box1), button, TRUE, TRUE, 0);
 
     //Create tree model
-    GtkTreeStore* store = gtk_tree_store_new(N_COLUMNS,
+    store = gtk_tree_store_new(N_COLUMNS,
             G_TYPE_STRING,
             G_TYPE_BOOLEAN);
-    //Get an iterator to the root of the tree and start adding data.
-    GtkTreeIter iter;
-    GtkTreeIter child_iter;
-    gtk_tree_store_append(store, &iter, NULL);
-    gtk_tree_store_set(store, &iter, 
-            FILE_COLUMN, "test_file0",
-//            LOCKED_COLUMN, TRUE,
-            -1);
-    gtk_tree_store_append(store, &iter, NULL);
-    gtk_tree_store_set(store, &iter, 
-            FILE_COLUMN, "test_file1",
-//            LOCKED_COLUMN, TRUE,
-            -1);
-    gtk_tree_store_append(store, &child_iter, &iter);
-    gtk_tree_store_set(store, &child_iter, 
-            FILE_COLUMN, "test_child_file0",
-            LOCKED_COLUMN, TRUE,
-            -1);
+    create_file_tree(".", NULL);
     //Create the tree's view
     GtkWidget *tree;
     tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (store));
