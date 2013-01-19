@@ -27,6 +27,33 @@ static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data
     }
 }
 
+void print_file_tree(const gchar* dir_name) {
+    GDir* dir;
+    GError* error;
+    const gchar* filename;
+
+    printf("print_file_tree: %s\n", dir_name);
+    dir = g_dir_open(dir_name, 0, &error);
+    while((filename = g_dir_read_name(dir))) {
+        //Find all of the directories first of all:
+        GFileTest test_mask = G_FILE_TEST_IS_DIR;
+        gchar* new_filename = g_strjoin("/", dir_name, filename, NULL);
+        //if(g_file_test(filename, test_mask)) {
+        if(g_file_test(new_filename, test_mask)) {
+            printf("DIR: %s\n", filename);
+            //gchar* new_dir_name = g_strjoin("/", dir_name, filename, NULL);
+            //print_file_tree(new_dir_name);
+            //print_file_tree(new_dir_name);
+            //print_file_tree(new_dir_name);
+            print_file_tree(new_filename);
+            g_free(new_filename);
+            //g_free(new_dir_name);
+        } else {
+            printf("FILE: %s\n", filename);
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     GtkWidget *window;
     GtkWidget *button;
@@ -68,6 +95,11 @@ int main(int argc, char *argv[]) {
             FILE_COLUMN, "test_file0",
 //            LOCKED_COLUMN, TRUE,
             -1);
+    gtk_tree_store_append(store, &iter, NULL);
+    gtk_tree_store_set(store, &iter, 
+            FILE_COLUMN, "test_file1",
+//            LOCKED_COLUMN, TRUE,
+            -1);
     gtk_tree_store_append(store, &child_iter, &iter);
     gtk_tree_store_set(store, &child_iter, 
             FILE_COLUMN, "test_child_file0",
@@ -101,6 +133,9 @@ int main(int argc, char *argv[]) {
             NULL);
     //Add tree to box
     gtk_box_pack_start(GTK_BOX(box1), tree, TRUE, TRUE, 0);
+
+    //Read files in and print them as a test
+    print_file_tree(".");
 
     //Show all of the widgets
     gtk_widget_show(tree);
