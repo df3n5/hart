@@ -6,14 +6,18 @@ enum {
     N_COLUMNS
 };
 
-static GtkTreeStore* store;
+GtkTreeStore* store;
+GtkTreeModel* sorted_model;
+GtkWidget* tree;
+GtkWidget* filew;
+GtkWidget *window;
 
 static void callback(GtkWidget *widget, gpointer data) {
     g_print ("Hello again - %s was pressed\n", (gchar *) data);
 }
 
 static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
-    gtk_main_quit ();
+    gtk_main_quit();
     return FALSE;
 }
 
@@ -79,12 +83,78 @@ void create_file_tree(const gchar* root_dir_name, GtkTreeIter* root_iter) {
     }
 }
 
+/*  Get the selected filename and print it to the console */
+static void file_ok_sel(GtkWidget *w, GtkFileSelection *fs)
+{
+    g_print ("%s\n", gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs)));
+    store = gtk_tree_store_new(N_COLUMNS,
+            G_TYPE_STRING,
+            G_TYPE_BOOLEAN);
+    create_file_tree(gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs)), NULL);
+    sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(store));
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tree), GTK_TREE_MODEL(sorted_model));
+    gtk_widget_destroy(filew);
+}
+
+//static void file_button_callback(GtkWidget *widget, gpointer data) {
+static void file_button_callback(GtkFileChooserButton *widget, gpointer data) {
+    g_print("Hello again - %s was pressed\n", (char *) data);
+    g_print("dir is %s\n", gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(widget)));
+
+    store = gtk_tree_store_new(N_COLUMNS,
+            G_TYPE_STRING,
+            G_TYPE_BOOLEAN);
+    create_file_tree(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(widget)), NULL);
+    sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(store));
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tree), GTK_TREE_MODEL(sorted_model));
+/*
+    filew = gtk_file_selection_new("File selection");
+    gtk_file_chooser_set_action(filew, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+
+    g_signal_connect(GTK_FILE_SELECTION(filew)->ok_button,
+            "clicked", G_CALLBACK(file_ok_sel), (gpointer)filew);
+    g_signal_connect_swapped(GTK_FILE_SELECTION(filew)->cancel_button,
+            "clicked", G_CALLBACK(gtk_widget_destroy),
+            filew);
+    gtk_widget_show(filew);
+*/
+
+/*
+    GtkWidget *dialog;
+    dialog = gtk_file_chooser_dialog_new("Set Root Directory",
+            window,
+            GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+            NULL);
+*/
+/*
+    GtkWidget *dialog;
+    g_object_get(widget,
+            "dialog", dialog,
+            NULL);
+
+    if(gtk_dialog_run(GTK_DIALOG(widget)) == GTK_RESPONSE_ACCEPT) {
+        char *filename;
+
+        filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(widget));
+
+        store = gtk_tree_store_new(N_COLUMNS,
+                G_TYPE_STRING,
+                G_TYPE_BOOLEAN);
+        create_file_tree(gtk_file_selection_get_filename(filename), NULL);
+        sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(store));
+        gtk_tree_view_set_model(GTK_TREE_VIEW(tree), GTK_TREE_MODEL(sorted_model));
+
+        g_free (filename);
+    }
+*/
+}
+
 int main(int argc, char *argv[]) {
-    GtkWidget *window;
     GtkWidget *button;
     GtkWidget *box1;
 
     gtk_init(&argc, &argv);
+
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
@@ -104,13 +174,11 @@ int main(int argc, char *argv[]) {
             G_TYPE_BOOLEAN);
     create_file_tree(".", NULL);
     //Sort the model for convenience
-    GtkTreeModel* sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(store));
+    sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(store));
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(sorted_model),
             FILE_COLUMN, GTK_SORT_ASCENDING);
 
     //Create the tree's view
-    GtkWidget *tree;
-    //tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(sorted_model));
 
     GtkCellRenderer *renderer;
@@ -140,8 +208,6 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(box1), tree, TRUE, TRUE, 0);
 
     //Create console output label
-    //GtkWidget* output_console = gtk_label_new("Console output");
-    //gtk_box_pack_start(GTK_BOX(box1), output_console, TRUE, TRUE, 0);
     GtkWidget* frame = gtk_frame_new("Console output");
     //GtkWidget* label = gtk_label_new("hg locks");
     GtkWidget* text_view = gtk_text_view_new();
@@ -158,7 +224,21 @@ int main(int argc, char *argv[]) {
     gtk_container_add(GTK_CONTAINER(frame), text_view);
     gtk_box_pack_start(GTK_BOX(box1), frame, TRUE, TRUE, 0);
 
+    //Create button w/ label
+/*
+    GtkWidget* file_button = gtk_button_new_with_label("Choose a folder");
+    gtk_box_pack_start(GTK_BOX(box1), file_button, TRUE, TRUE, 0);
+
+    g_signal_connect(file_button, "clicked", G_CALLBACK(file_button_callback), (gpointer)"file_button");
+*/
+
+    GtkWidget* file_button = gtk_file_chooser_button_new("Select a folder",
+            GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    gtk_box_pack_start(GTK_BOX(box1), file_button, TRUE, TRUE, 0);
+    g_signal_connect(file_button, "file-set", G_CALLBACK(file_button_callback), (gpointer)"file_button");
+
     //Show all of the widgets
+    gtk_widget_show(file_button);
     gtk_widget_show(tree);
     gtk_widget_show(frame);
     gtk_widget_show(text_view);

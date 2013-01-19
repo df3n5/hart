@@ -1,3 +1,12 @@
 TODO
 ====
+- Show locked files
+
+BUGS
+====
+- If you select while not having selected a directory it will let you select which will select the home directory which is pretty awful.
+
+DONE
+====
 - Create a tree of file listings
+- Select a root directory
