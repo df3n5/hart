@@ -40,16 +40,10 @@ void print_file_tree(const gchar* dir_name) {
         //Find all of the directories first of all:
         GFileTest test_mask = G_FILE_TEST_IS_DIR;
         gchar* new_filename = g_strjoin("/", dir_name, filename, NULL);
-        //if(g_file_test(filename, test_mask)) {
         if(g_file_test(new_filename, test_mask)) {
             printf("DIR: %s\n", filename);
-            //gchar* new_dir_name = g_strjoin("/", dir_name, filename, NULL);
-            //print_file_tree(new_dir_name);
-            //print_file_tree(new_dir_name);
-            //print_file_tree(new_dir_name);
             print_file_tree(new_filename);
             g_free(new_filename);
-            //g_free(new_dir_name);
         } else {
             printf("FILE: %s\n", filename);
         }
