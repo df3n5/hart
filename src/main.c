@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 
     gtk_container_set_border_width(GTK_CONTAINER(window), 10);
 
-    box1 = gtk_hbox_new(FALSE, 0);
+    box1 = gtk_vbox_new(FALSE, 0);
 
     gtk_container_add(GTK_CONTAINER(window), box1);
 
@@ -103,8 +103,8 @@ int main(int argc, char *argv[]) {
             G_TYPE_STRING,
             G_TYPE_BOOLEAN);
     create_file_tree(".", NULL);
-    //Sort model
-    GtkTreeModel* sorted_model = gtk_tree_model_sort_new_with_model(store);
+    //Sort the model for convenience
+    GtkTreeModel* sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(store));
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(sorted_model),
             FILE_COLUMN, GTK_SORT_ASCENDING);
 
@@ -139,11 +139,29 @@ int main(int argc, char *argv[]) {
     //Add tree to box
     gtk_box_pack_start(GTK_BOX(box1), tree, TRUE, TRUE, 0);
 
-    //Read files in and print them as a test
-    print_file_tree(".");
+    //Create console output label
+    //GtkWidget* output_console = gtk_label_new("Console output");
+    //gtk_box_pack_start(GTK_BOX(box1), output_console, TRUE, TRUE, 0);
+    GtkWidget* frame = gtk_frame_new("Console output");
+    //GtkWidget* label = gtk_label_new("hg locks");
+    GtkWidget* text_view = gtk_text_view_new();
+    //gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
+    //gtk_container_add(GTK_CONTAINER(frame), label);
+    GtkTextTagTable* text_tag_table = gtk_text_tag_table_new();
+    GtkTextBuffer* console_buffer = gtk_text_buffer_new(text_tag_table);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(text_view), console_buffer);
+    gchar* test_str = "blah\nwoiajheoih\nwoeihoiwha\nweoihewoih\nwoeihoi";
+    gtk_text_buffer_set_text(console_buffer, 
+            test_str,
+            strlen(test_str));
+    //gtk_text_view_set_buffer("HI");
+    gtk_container_add(GTK_CONTAINER(frame), text_view);
+    gtk_box_pack_start(GTK_BOX(box1), frame, TRUE, TRUE, 0);
 
     //Show all of the widgets
     gtk_widget_show(tree);
+    gtk_widget_show(frame);
+    gtk_widget_show(text_view);
     gtk_widget_show(box1);
     gtk_widget_show(window); //Show window last so they all appear at once.
 
